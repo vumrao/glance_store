@@ -1,3 +1,4 @@
+
 # Copyright 2010-2011 Josh Durgin
 # All Rights Reserved.
 #
@@ -224,6 +225,14 @@ class Store(driver.Store):
         return (ImageIterator(loc.pool, loc.image, loc.snapshot, self),
                 self.get_size(location))
 
+    @property
+    def features(self):
+        features = self.cluster.conf_get('rbd_default_features')
+        if ((features is None) or (int(features) == 0)):
+            features = self.driver.rbd.RBD_FEATURE_LAYERING
+        return int(features)
+
+
     def get_size(self, location, context=None):
         """
         Takes a `glance_store.location.Location` object that indicates
@@ -262,9 +271,9 @@ class Store(driver.Store):
         :retval `glance_store.rbd.StoreLocation` object
         """
         librbd = rbd.RBD()
-        if hasattr(rbd, 'RBD_FEATURE_LAYERING'):
+        if hasattr(rbd, 'features'):
             librbd.create(ioctx, image_name, size, order, old_format=False,
-                          features=rbd.RBD_FEATURE_LAYERING)
+                          features=features)
             return StoreLocation({
                 'fsid': fsid,
                 'pool': self.pool,
